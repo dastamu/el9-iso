@@ -1,0 +1,6 @@
+iso_mod
+mount_dvd
+mount_boot
+*.iso
+*.zip
+*.tgz
