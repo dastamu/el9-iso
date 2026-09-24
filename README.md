@@ -12,3 +12,10 @@ sudo dnf install createrepo_c xorriso
 @ EL 10
 sudo dnf install image-builder
 ```
+## Build
+```sh
+image-builder list
+sudo image-builder build image-installer --distro almalinux-9.8
+
+sudo image-builder build image-installer --blueprint my-blueprint.toml
+```
