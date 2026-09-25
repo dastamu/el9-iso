@@ -1,43 +1,57 @@
 #!/bin/bash
 
 # Source ISO image
-echo " Get source ISO..."
+printf " -------------------\n"
+printf " --- \e[32mISO Builder\e[0m ---\n"
+printf " -------------------\n"
 ISO_BOOT="OracleLinux-R9-U8-x86_64-boot-uek.iso"
-echo " - ${ISO_BOOT}"
+
+if [ -f ${ISO_BOOT} ]; 
+then 
+  printf " ISO \"${ISO_BOOT}\" ... [\e[32mdone\e[0m]\n";
+else
+  printf " ISO \"${ISO_BOOT}\" ";
+  wget -q -c "https://yum.oracle.com/ISOS/OracleLinux/OL9/u8/x86_64/"${ISO_BOOT}
+  printf "was download ... [\e[32mdone\e[0m]\n";
+fi
 
 # Work folders
-echo " Working directory..."
+printf " Define working directory:"
 MNT_BOOT="mount_boot"
 WORK_DIR="iso_mod"
-echo " - ${MNT_BOOT}"
-echo " - ${WORK_DIR}"
-
+printf " \"${MNT_BOOT}\","
+printf " \"${WORK_DIR}\"... [\e[32mdone\e[0m]\n"
 
 # Clean and make dirs
+printf " Make dirs "
 sudo rm -rf "$WORK_DIR" "$MNT_BOOT"
 mkdir -p "$WORK_DIR" "$MNT_BOOT"
-echo " Dirs... done"
+printf "... [\e[32mdone\e[0m]\n"
 
 # Mount source ISO
-sudo mount -o loop "$ISO_BOOT" "$MNT_BOOT"
+printf " Mount ISO Boot\n"
+sudo mount -o loop "$ISO_BOOT" "$MNT_BOOT" 2>/dev/null
 #ls -al ${MNT_BOOT}
-echo " Mount... done"
+printf " ... [\e[32mdone\e[0m]\n"
 
 # Boot ISO
+printf " Copy data "
 cp -r "$MNT_BOOT"/. "$WORK_DIR"/
-echo " Copy boot... done"
+printf "... [\e[32mdone\e[0m]\n"
 
 # Unmount ISO's
+printf " Unmount ISO "
 sudo umount "$MNT_BOOT"
 rm -rf "$MNT_BOOT"
-echo " Unmount... done"
+printf "... [\e[32mdone\e[0m]\n"
 
 # BaseOS RPMs
+printf " Get BaseOS RPMs "
 mkdir -p "${WORK_DIR}/BaseOS/Packages"
 cd "${WORK_DIR}/BaseOS/Packages"
-wget -c "https://yum.oracle.com/repo/OracleLinux/OL9/8/baseos/base/x86_64/getPackage/audit-3.1.5-8.0.1.el9.x86_64.rpm"
+wget -qc -i ../../../rpms-core.txt
 cd ../../../
-echo " BaseOS RPMs... done"
+printf "... [\e[32mdone\e[0m]\n"
 
 # ID's files
 cat << 'EOF_TREEINFO' > "${WORK_DIR}/.treeinfo"
