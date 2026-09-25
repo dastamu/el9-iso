@@ -4,3 +4,5 @@ mount_boot
 *.iso
 *.zip
 *.tgz
+*.xml
+
