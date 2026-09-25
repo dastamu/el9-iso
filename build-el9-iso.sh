@@ -2,65 +2,60 @@
 
 # Source ISO image
 echo " Get source ISO..."
-ISO_DVD="${1}OracleLinux-R9-U8-x86_64-dvd.iso"
-ISO_BOOT="${1}OracleLinux-R9-U8-x86_64-boot.iso"
-#BOOT_ISO="${1}OracleLinux-R9-U8-x86_64-boot-uek.iso"
+ISO_BOOT="OracleLinux-R9-U8-x86_64-boot-uek.iso"
 echo " - ${ISO_BOOT}"
-echo " - ${ISO_DVD}"
 
 # Work folders
 echo " Working directory..."
-MNT_DVD="mount_dvd"
 MNT_BOOT="mount_boot"
 WORK_DIR="iso_mod"
-echo " - ${MNT_DVD}"
 echo " - ${MNT_BOOT}"
 echo " - ${WORK_DIR}"
 
-echo "=== Building start ==="
 
 # Clean and make dirs
-sudo rm -rf "$WORK_DIR" "$MNT_BOOT" "$MNT_DVD"
-mkdir -p "$WORK_DIR" "$MNT_BOOT" "$MNT_DVD"
+sudo rm -rf "$WORK_DIR" "$MNT_BOOT"
+mkdir -p "$WORK_DIR" "$MNT_BOOT"
 echo " Dirs... done"
 
 # Mount source ISO
 sudo mount -o loop "$ISO_BOOT" "$MNT_BOOT"
-sudo mount -o loop "$ISO_DVD" "$MNT_DVD"
-echo " Mount... done"
-
 #ls -al ${MNT_BOOT}
-ls -al ${MNT_DVD}/AppStream/Packages/
-ls -al ${MNT_DVD}/BaseOS/Packages/
+echo " Mount... done"
 
 # Boot ISO
 cp -r "$MNT_BOOT"/. "$WORK_DIR"/
 echo " Copy boot... done"
 
-# BaseOS data
-cp -r "$MNT_DVD"/BaseOS "$WORK_DIR"/
-echo " BaseOS... done"
+# Unmount ISO's
+sudo umount "$MNT_BOOT"
+rm -rf "$MNT_BOOT"
+echo " Unmount... done"
+
+# BaseOS RPMs
+mkdir -p "${WORK_DIR}/BaseOS/Packages"
+cd "${WORK_DIR}/BaseOS/Packages"
+wget -c "https://yum.oracle.com/repo/OracleLinux/OL9/8/baseos/base/x86_64/getPackage/audit-3.1.5-8.0.1.el9.x86_64.rpm"
+cd ../../../
+echo " BaseOS RPMs... done"
 
 # ID's files
-cp "$MNT_DVD"/.treeinfo "$WORK_DIR"/
-cp "$MNT_DVD"/media.repo "$WORK_DIR"/
-cp "$MNT_DVD"/images/efiboot.img "$WORK_DIR"/images/
+cat << 'EOF_TREEINFO' > "${WORK_DIR}/.treeinfo"
+[variant-BaseOS]
+id = BaseOS
+name = BaseOS
+packages = BaseOS
+repository = BaseOS
+type = variant
+EOF_TREEINFO
+cat << EOF_DISKINFO > "${WORK_DIR}/.discinfo"
+`date +%s.%N`
+Oracle Linux 9.8.0
+x86_64
+BaseOS
+EOF_DISKINFO
 echo " ID's files... done"
 
-# AppStream data
-mkdir -p "$WORK_DIR"/AppStream/Packages
-KEEP_PATTERNS=("nano")
-for pattern in "${KEEP_PATTERNS[@]}"; do
-    find "$MNT_DVD"/AppStream/Packages/ -name "*${pattern}*" -exec cp {} "$WORK_DIR"/AppStream/Packages/ \; 2>/dev/null || true
-done
-echo " AppStream... done"
-#ls -al ${WORK_DIR}
-du -sh ${WORK_DIR}
-
-# Unmount ISO's
-sudo umount "$MNT_BOOT" "$MNT_DVD"
-rm -rf "$MNT_BOOT" "$MNT_DVD"
-echo " Unmount... done"
 
 # Kickstart file
 cp  `pwd`/ks1.cfg "$WORK_DIR"/ks1.cfg
@@ -93,9 +88,10 @@ EOF
 echo " GRUB... done"
 
 # Create repository
-createrepo_c "$WORK_DIR"/AppStream/
-#createrepo_c "$WORK_DIR"/BaseOS/
-echo " Repository... done"
+printf " Build repository "
+COMPS_FILE="d8d30e7e5b6651973b362152f5791172184c285b2e1985dcb3df5cfebc6d726d-comps.xml"
+createrepo_c -g `pwd`"/${COMPS_FILE}" "${WORK_DIR}/BaseOS/"
+printf "... done"
 
 # Build new ISO
 OUTPUT_ISO=`pwd`"/my-ol9u8.iso"
