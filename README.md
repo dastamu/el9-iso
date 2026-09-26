@@ -29,7 +29,6 @@ sudo image-builder build image-installer --blueprint my-blueprint.toml
 sudo dnf install qemu-kvm libvirt virt-install virt-viewer
 sudo systemctl daemon-reload
 sudo systemctl enable --now libvirtd
-sudo dnf install virt-install virt-viewer
 
 qemu-img create -f qcow2 vm-test.qcow2 16G
 virt-install --name=VMTest --vcpus=2 --memory=4096 --disk path=vm-test.qcow2,size=16 --cdrom=el9-iso/generated.iso --os-variant=generic --network default --graphics vnc
